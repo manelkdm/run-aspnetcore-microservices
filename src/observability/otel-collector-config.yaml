@@ -1,0 +1,52 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+  resource:
+    attributes:
+      - action: upsert
+        key: service.namespace
+        value: eshop
+      - action: upsert
+        key: deployment.environment
+        value: ${env:DEPLOYMENT_ENVIRONMENT}
+  transform/http_labels:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["http.method"], attributes["Method"]) where attributes["http.method"] == nil and attributes["Method"] != nil
+          - set(attributes["http.method"], attributes["HttpMethod"]) where attributes["http.method"] == nil and attributes["HttpMethod"] != nil
+          - set(attributes["http.route"], attributes["Path"]) where attributes["http.route"] == nil and attributes["Path"] != nil
+          - set(attributes["http.route"], attributes["RequestPath"]) where attributes["http.route"] == nil and attributes["RequestPath"] != nil
+          - set(attributes["http.status_code"], attributes["StatusCode"]) where attributes["http.status_code"] == nil and attributes["StatusCode"] != nil
+  attributes/loki:
+    actions:
+      - action: insert
+        key: loki.resource.labels
+        value: service.name,service.namespace,deployment.environment,service.instance.id
+      - action: insert
+        key: loki.attribute.labels
+        value: severity,http.method,http.route,http.status_code
+
+exporters:
+  logging:
+    loglevel: info
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [resource, transform/http_labels, attributes/loki, batch]
+      exporters: [loki, logging]

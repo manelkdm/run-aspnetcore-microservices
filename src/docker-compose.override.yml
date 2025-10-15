@@ -57,8 +57,10 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ConnectionStrings__Database=Server=catalogdb;Port=5432;Database=CatalogDb;User Id=postgres;Password=postgres;Include Error Detail=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - catalogdb
+      - otel-collector
     ports:
       - "6000:8080"
       - "6060:8081"
@@ -77,11 +79,13 @@ services:
       - MessageBroker__Host=amqp://ecommerce-mq:5672
       - MessageBroker__UserName=guest
       - MessageBroker__Password=guest
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - basketdb
       - distributedcache
       - discount.grpc
       - messagebroker
+      - otel-collector
     ports:
       - "6001:8080"
       - "6061:8081"
@@ -95,6 +99,9 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ConnectionStrings__Database=Data Source=discountdb
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - otel-collector
     ports:
       - "6002:8080"
       - "6062:8081"
@@ -112,9 +119,11 @@ services:
       - MessageBroker__UserName=guest
       - MessageBroker__Password=guest
       - FeatureManagement__OrderFullfilment=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - orderdb
       - messagebroker
+      - otel-collector
     ports:
       - "6003:8080"
       - "6063:8081"
@@ -127,10 +136,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - catalog.api
       - basket.api
       - ordering.api
+      - otel-collector
     ports:
       - "6004:8080"
       - "6064:8081"
@@ -144,11 +155,59 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ApiSettings__GatewayAddress=http://yarpapigateway:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - yarpapigateway
+      - otel-collector
     ports:
       - "6005:8080"
       - "6065:8081"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+
+  loki:
+    image: grafana/loki:2.9.5
+    container_name: loki
+    command: ["-config.file=/etc/loki/config.yaml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./observability/loki-config.yaml:/etc/loki/config.yaml:ro
+    restart: always
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_DEFAULT_THEME=dark
+    depends_on:
+      - loki
+    volumes:
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: always
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.97.0
+    container_name: otel-collector
+    command: ["--config", "/etc/otelcol/config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      - loki
+    environment:
+      - DEPLOYMENT_ENVIRONMENT=Development
+    restart: always
+
+volumes:
+  loki_data:
