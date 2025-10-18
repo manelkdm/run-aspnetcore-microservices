@@ -192,6 +192,16 @@ services:
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     restart: always
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - otel-collector
+    restart: always
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.97.0
     container_name: otel-collector
@@ -199,6 +209,7 @@ services:
     ports:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus scrape endpoint
     volumes:
       - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
     depends_on:
@@ -216,6 +227,13 @@ services:
       - "14250:14250"   # Jaeger gRPC (legacy)
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+    restart: always
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.24.0
+    container_name: blackbox
+    ports:
+      - "9115:9115"
     restart: always
 
 volumes:

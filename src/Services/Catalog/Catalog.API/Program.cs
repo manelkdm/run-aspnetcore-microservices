@@ -4,6 +4,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using System.Reflection;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +98,22 @@ builder.Services.AddOpenTelemetry()
                 otlp.Endpoint = new Uri(endpoint);
                 otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
             });
+    })
+    .WithMetrics(meter =>
+    {
+        meter
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            
+            .AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel", "System.Net.Http")
+            .AddOtlpExporter(otlp =>
+            {
+                var endpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://otel-collector:4317";
+                otlp.Endpoint = new Uri(endpoint);
+                otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+            });
     });
 
 builder.Services.AddHealthChecks()
@@ -116,6 +133,7 @@ app.UseHealthChecks("/health",
     });
 
 app.Run();
+
 
 
 

@@ -1,0 +1,85 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    { "type": "row", "title": "Traffic & Latency", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+    {
+      "type": "timeseries",
+      "title": "HTTP request rate (rps)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count[1m]))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP latency p95 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "1000 * histogram_quantile(0.95, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket[5m])))" }
+      ]
+    },
+
+    { "type": "row", "title": "Errors", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 } },
+    {
+      "type": "timeseries",
+      "title": "HTTP 5xx rate (%)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2 } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) / clamp_min(sum by (service_name) (rate(http_server_request_duration_seconds_count[1m])), 1)" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Services active (last 5m)",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "count(sum by (service_name) (rate(http_server_request_duration_seconds_count[5m])) > 0)" }
+      ]
+    },
+
+    { "type": "row", "title": "Process / Runtime", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 } },
+    {
+      "type": "timeseries",
+      "title": "Collector CPU seconds (total)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 2 } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "otelcol_process_cpu_seconds" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Managed Heap (MB)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "fieldConfig": { "defaults": { "unit": "megabytes" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prom" }, "refId": "A", "expr": "sum by (service_name) (process_runtime_dotnet_gc_heap_size_bytes) / 1024 / 1024" }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "",
+  "title": "OTel Metrics",
+  "uid": "otel-metrics",
+  "version": 2
+}
+

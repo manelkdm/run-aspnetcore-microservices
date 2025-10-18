@@ -90,6 +90,28 @@
         {"datasource":{"type":"loki","uid":"loki"},"refId":"A","expr":"{job=~\"$job\",service_name=~\"$service\"} | json"}
       ]
     }
+    ,
+    {
+      "type": "table",
+      "title": "Traces (Jaeger)",
+      "id": 11,
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 44},
+      "options": {"showHeader": true},
+      "fieldConfig": {
+        "defaults": {"custom": {}},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Trace ID"},
+            "properties": [
+              {"id": "links", "value": [{"title": "Open in Jaeger", "url": "http://localhost:16686/trace/${__value.raw}", "targetBlank": true}]}
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {"datasource": {"type": "jaeger", "uid": "jaeger"}, "refId": "A", "queryType": "search", "service": "${service:single}", "operation": "", "tags": "", "minDuration": "", "limit": 20, "lookback": "1h"}
+      ]
+    }
   ],
   "refresh": "10s",
   "schemaVersion": 39,
@@ -108,6 +130,7 @@
   "version": 1,
   "weekStart": ""
 }
+
 
 
 

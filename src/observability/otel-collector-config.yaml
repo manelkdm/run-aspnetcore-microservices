@@ -48,7 +48,15 @@ exporters:
     endpoint: jaeger:4317
     tls:
       insecure: true
+  # Expose OTEL metrics in Prometheus exposition format
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    resource_to_telemetry_conversion:
+      enabled: true
 service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
   pipelines:
     logs:
       receivers: [otlp]
@@ -58,3 +66,7 @@ service:
       receivers: [otlp]
       processors: [resource, batch]
       exporters: [otlp/jaeger, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [prometheus]

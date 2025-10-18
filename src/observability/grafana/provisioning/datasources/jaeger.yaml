@@ -1,0 +1,25 @@
+apiVersion: 1
+
+datasources:
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    isDefault: false
+    editable: true
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki
+        # Map common OTEL tags to Loki labels for filtering
+        mapTagNamesEnabled: true
+        mappedTags:
+          - key: service.name
+            value: service_name
+        # Also pass http tags if present
+        tags: [ http.method, http.route, http.status_code ]
+        filterByTraceID: true
+        filterBySpanID: false
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+
