@@ -16,21 +16,130 @@
     ]
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "links": [],
   "refresh": "10s",
   "panels": [
     {
       "type": "row",
-      "title": "Golden Signals",
+      "title": "Service Health",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
     },
     {
-      "type": "timeseries",
-      "title": "Traffic (RPS) by service",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "type": "stat",
+      "title": "Gateway",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://yarpapigateway:8080/health\"}[1m])"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Basket API",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://basket.api:8080/health\"}[1m])"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Catalog API",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://catalog.api:8080/health\"}[1m])"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Ordering API",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://ordering.api:8080/health\"}[1m])"
+        }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "Metrics",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Traffic (requests per second)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "fieldConfig": { "defaults": { "unit": "req/s" } },
       "targets": [
         {
           "refId": "A",
@@ -46,7 +155,7 @@
     {
       "type": "timeseries",
       "title": "Latency p95 (ms) by service",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prom" },
       "fieldConfig": { "defaults": { "unit": "ms" } },
       "targets": [
@@ -64,13 +173,13 @@
     {
       "type": "timeseries",
       "title": "Errors (5xx %) by service",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prom" },
       "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2 } },
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\", http_response_status_code=~\"5..\"}[$__rate_interval])) / clamp_min(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])), 1)",
+          "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",http_response_status_code=~\"5..\"}[$__rate_interval])) / clamp_min(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])), 1)",
           "range": true
         }
       ],
@@ -82,7 +191,7 @@
     {
       "type": "timeseries",
       "title": "Saturation (Managed heap MB) by service",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prom" },
       "fieldConfig": { "defaults": { "unit": "megabytes" } },
       "targets": [
@@ -100,27 +209,6 @@
 
     {
       "type": "row",
-      "title": "Availability & Overview",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 }
-    },
-    {
-      "type": "stat",
-      "title": "RPS (overall)",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 18 },
-      "datasource": { "type": "prometheus", "uid": "prom" },
-      "fieldConfig": { "defaults": { "decimals": 2 } },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
-          "range": true
-        }
-      ],
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
-    },
-
-    {
-      "type": "row",
       "title": "Logs & Traces",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }
     },
@@ -133,7 +221,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{service_name=~\"$service\"} | json | line_format \"{{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
+          "expr": "{service_name=~\"$service\"} | json | line_format \"{{ with .timestamp }}{{ . }}{{ else }}{{ index . \\\"ts\\\" }}{{ end }} {{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
         }
       ]
     },
@@ -146,7 +234,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{service_name=~\"$service\", level=~\"(?i)error|warn\"} | json | line_format \"{{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
+          "expr": "{service_name=~\"$service\", level=~\"(?i)error|warn\"} | json | line_format \"{{ with .timestamp }}{{ . }}{{ else }}{{ index . \\\"ts\\\" }}{{ end }} {{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
         }
       ]
     },
@@ -179,116 +267,6 @@
         {
           "refId": "A",
           "expr": "{service_name=~\"$service\"} | json | line_format \"{{ .traceid }}\""
-        }
-      ]
-    },
-
-    {
-      "type": "row",
-      "title": "Service Health",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 }
-    },
-    {
-      "type": "stat",
-      "title": "Gateway",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 50 },
-      "datasource": { "type": "prometheus", "uid": "prom" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "DOWN", "color": "red" },
-                "1": { "text": "UP", "color": "green" }
-              }
-            }
-          ]
-        }
-      },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" } },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://yarpapigateway:8080/health\"}[1m])"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "Basket API",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 50 },
-      "datasource": { "type": "prometheus", "uid": "prom" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "DOWN", "color": "red" },
-                "1": { "text": "UP", "color": "green" }
-              }
-            }
-          ]
-        }
-      },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" } },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://basket.api:8080/health\"}[1m])"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "Catalog API",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 50 },
-      "datasource": { "type": "prometheus", "uid": "prom" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "DOWN", "color": "red" },
-                "1": { "text": "UP", "color": "green" }
-              }
-            }
-          ]
-        }
-      },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" } },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://catalog.api:8080/health\"}[1m])"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "Ordering API",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 50 },
-      "datasource": { "type": "prometheus", "uid": "prom" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "DOWN", "color": "red" },
-                "1": { "text": "UP", "color": "green" }
-              }
-            }
-          ]
-        }
-      },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false, "fields": "" } },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max_over_time(probe_success{job=\"blackbox\",instance=\"http://ordering.api:8080/health\"}[1m])"
         }
       ]
     }
