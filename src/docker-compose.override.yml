@@ -184,12 +184,15 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_DEFAULT_THEME=dark
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
     depends_on:
       - loki
     volumes:
       - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./observability/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
     restart: always
 
   prometheus:
@@ -199,8 +202,18 @@ services:
       - "9090:9090"
     volumes:
       - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus.rules.yml:/etc/prometheus/rules/alerts.yml:ro
     depends_on:
       - otel-collector
+      - alertmanager
+    restart: always
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     restart: always
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.97.0

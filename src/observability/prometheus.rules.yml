@@ -1,0 +1,12 @@
+groups:
+  - name: service-health
+    rules:
+      - alert: ServiceDown
+        expr: max_over_time(probe_success{job="blackbox"}[2m]) < 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.instance }} is DOWN"
+          description: >
+            Blackbox probe has failed for {{ $labels.instance }} for more than two minutes.

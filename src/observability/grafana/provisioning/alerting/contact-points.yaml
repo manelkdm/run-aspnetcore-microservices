@@ -1,0 +1,15 @@
+apiVersion: 1
+
+contactPoints:
+  - name: email-default
+    receivers:
+      - uid: email-default
+        type: email
+        settings:
+          addresses: manel.keddam01@gmail.com
+          singleEmail: true
+
+notificationPolicies:
+  - receiver: email-default
+    group_by: ['alertname']
+    continue: false
