@@ -41,6 +41,10 @@ builder.Logging.AddOpenTelemetry(options =>
     });
 });
 
+builder.Logging.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+
+
 // OpenTelemetry tracing (captures gRPC server via AspNetCore)
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracer =>
@@ -87,6 +91,28 @@ builder.Services.AddOpenTelemetry()
     });
 
 var app = builder.Build();
+
+// gRPC summary (method + status)
+app.Use(async (ctx, next) =>
+{
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    try { await next(); }
+    finally
+    {
+        sw.Stop();
+        var log = ctx.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GrpcSummary");
+        var method = ctx.Request.Path.Value ?? "";
+        using (log.BeginScope(new Dictionary<string, object?>
+        {
+            ["GrpcMethod"] = method,
+            ["StatusCode"] = ctx.Response.StatusCode
+        }))
+        {
+            log.LogInformation("gRPC {GrpcMethod} -> {StatusCode} in {ElapsedMs} ms",
+                               method, ctx.Response.StatusCode, sw.ElapsedMilliseconds);
+        }
+    }
+});
 
 // Configure the HTTP request pipeline.
 app.UseMigration();

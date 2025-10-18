@@ -56,6 +56,12 @@ builder.Logging.AddOpenTelemetry(options =>
     });
 });
 
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Information);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+
+
 // OpenTelemetry tracing
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracer =>
@@ -120,6 +126,32 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Database")!);
 
 var app = builder.Build();
+
+app.Use(async (ctx, next) =>
+{
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    try { await next(); }
+    finally
+    {
+        sw.Stop();
+        var log = ctx.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("HttpSummary");
+        using (log.BeginScope(new Dictionary<string, object?>
+        {
+            ["Route"] = ctx.GetEndpoint()?.DisplayName ?? ctx.Request.Path.Value,
+            ["Method"] = ctx.Request.Method,
+            ["StatusCode"] = ctx.Response.StatusCode
+        }))
+        {
+            log.LogInformation("HTTP {Method} {Route} -> {StatusCode} in {ElapsedMs} ms",
+                               ctx.Request.Method,
+                               ctx.GetEndpoint()?.DisplayName ?? ctx.Request.Path.Value,
+                               ctx.Response.StatusCode,
+                               sw.ElapsedMilliseconds);
+        }
+    }
+});
+
+app.MapControllers();
 
 // Configure the HTTP request pipeline.
 app.MapCarter();

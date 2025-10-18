@@ -214,29 +214,53 @@
     },
     {
       "type": "logs",
-      "title": "Recent logs (formatted)",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 23 },
+      "title": "Recent logs (clean)",
+      "id": 1,
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true },
       "targets": [
-        {
+          {
           "refId": "A",
-          "expr": "{service_name=~\"$service\"} | json | line_format \"{{ with .timestamp }}{{ . }}{{ else }}{{ index . \\\"ts\\\" }}{{ end }} {{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
-        }
-      ]
+          "queryType": "range",
+          "expr": "{service_name=~\"$service\"} | json | line_format \"{{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}{{ with .order_id }} [id={{ . }}{{ end }}{{ with (index . \\\"order.id\\\") }} [id={{ . }}{{ end }}{{ with .order_number }}, number={{ . }}{{ end }}{{ with (index . \\\"order.number\\\") }}, number={{ . }}{{ end }}{{ with .status }}] with status {{ . }}{{ end }}{{ with (index . \\\"order.status\\\") }}] with status {{ . }}{{ end }}\""
+          }
+      ],
+      "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": true,
+          "sortOrder": "Descending",
+          "wrapLogMessage": true
+      },
+          "transparent": true
     },
     {
       "type": "logs",
-      "title": "Recent errors",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 33 },
+      "title": "Recent errors (clean)",
+      "id": 2,
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
       "datasource": { "type": "loki", "uid": "loki" },
-      "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true },
       "targets": [
-        {
+          {
           "refId": "A",
-          "expr": "{service_name=~\"$service\", level=~\"(?i)error|warn\"} | json | line_format \"{{ with .timestamp }}{{ . }}{{ else }}{{ index . \\\"ts\\\" }}{{ end }} {{ with .level }}{{ . }}{{ else }}{{ .severity }}{{ end }} [{{ with (index . \\\"service.name\\\") }}{{ . }}{{ else }}{{ .service_name }}{{ end }}] {{ with (index . \\\"http.method\\\") }}{{ . }}{{ else }}-{{ end }} {{ with (index . \\\"http.route\\\") }}{{ . }}{{ else }}-{{ end }} -> {{ with (index . \\\"http.status_code\\\") }}{{ . }}{{ else }}-{{ end }} | req={{ with .RequestId }}{{ . }}{{ else }}{{ with (index . \\\"request_id\\\") }}{{ . }}{{ else }}-{{ end }}{{ end }} | {{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}\""
-        }
-      ]
+          "queryType": "range",
+          "expr": "{service_name=~\"$service\"} | json |~ \"(?i)error|warn\" | line_format \"{{ with .message }}{{ . }}{{ else }}{{ with .msg }}{{ . }}{{ else }}{{ with .body }}{{ . }}{{ else }}{{ . }}{{ end }}{{ end }}{{ end }}{{ with .order_id }} [id={{ . }}{{ end }}{{ with (index . \\\"order.id\\\") }} [id={{ . }}{{ end }}{{ with .order_number }}, number={{ . }}{{ end }}{{ with (index . \\\"order.number\\\") }}, number={{ . }}{{ end }}{{ with .status }}] with status {{ . }}{{ end }}{{ with (index . \\\"order.status\\\") }}] with status {{ . }}{{ end }}\""
+          }
+      ],
+      "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showCommonLabels": false,
+          "showLabels": false,
+          "showTime": true,
+          "sortOrder": "Descending",
+          "wrapLogMessage": true
+      },
+      "transparent": true
     },
     {
       "type": "table",
